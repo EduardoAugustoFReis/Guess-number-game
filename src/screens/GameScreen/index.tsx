@@ -3,34 +3,34 @@ import PrimaryButton from "@/src/components/PrimaryButton";
 import Title from "@/src/components/Title";
 import useGameData from "@/src/context/gameData/useGameData";
 import AntDesign from "@expo/vector-icons/AntDesign";
-import { Link } from "expo-router";
+import { Link, router } from "expo-router";
 import React, { useEffect, useState } from "react";
-import { Alert, StyleSheet, Text, View } from "react-native";
+import { Alert, ScrollView, StyleSheet, Text, View } from "react-native";
 
 const generateRandomNumber = (
   min: number,
   max: number,
-  exclude: string
+  exclude: number
 ): number => {
-  const randomNumber = Math.floor(Math.random() * (max - min)) + min;
+  // Se min == max, retorna min (único número possível)
+  if (min === max) return min;
 
-  if (randomNumber === Number(exclude)) {
-    return generateRandomNumber(min, max, exclude);
-  } else {
-    return randomNumber;
+  let randomNumber = exclude;
+  while (randomNumber === exclude) {
+    randomNumber = Math.floor(Math.random() * (max - min + 1)) + min;
   }
+  return randomNumber;
 };
-
-let minBoundary = 1;
-let maxBoundary = 100;
 
 const GameScreen = () => {
   const { enteredNumber } = useGameData();
-  const initialGuess = generateRandomNumber(1, 100, enteredNumber);
+  const initialGuess = generateRandomNumber(1, 100, Number(enteredNumber));
   const [currentGuess, setCurrentGuess] = useState(initialGuess);
   const [guessRounds, setGuessRounds] = useState<number[]>([initialGuess]);
+  const [minBoundary, setMinBoundary] = useState(1);
+  const [maxBoundary, setMaxBoundary] = useState(100);
 
-  function nextGuessHandler(direction: string) {
+  function nextGuessHandler(direction: "lower" | "greater") {
     if (
       (direction === "lower" && currentGuess < Number(enteredNumber)) ||
       (direction === "greater" && currentGuess > Number(enteredNumber))
@@ -38,26 +38,30 @@ const GameScreen = () => {
       Alert.alert("Don't lie!");
       return;
     }
+
+    // Atualiza os limites locais
     if (direction === "lower") {
-      maxBoundary = currentGuess;
+      setMaxBoundary(currentGuess - 1);
     } else {
-      minBoundary = currentGuess + 1;
+      setMinBoundary(currentGuess + 1);
     }
 
     const newGuess = generateRandomNumber(
-      minBoundary,
-      maxBoundary,
-      String(currentGuess)
+      direction === "lower" ? minBoundary : currentGuess + 1,
+      direction === "lower" ? currentGuess - 1 : maxBoundary,
+      currentGuess
     );
 
     setCurrentGuess(newGuess);
-
     setGuessRounds((prev) => [newGuess, ...prev]);
   }
 
   useEffect(() => {
     if (currentGuess === Number(enteredNumber)) {
-      Alert.alert("End game!", "The app guess your number");
+     router.push({
+      pathname: "/game/over",
+      params: {rounds: guessRounds.length}
+     })
     }
   }, [currentGuess, enteredNumber]);
 
@@ -103,13 +107,13 @@ const GameScreen = () => {
 
         <View style={styles.logRoundsContainer}>
           <Text style={styles.logRoundsContainerText}>Log Rounds:</Text>
-          {guessRounds.map((guess, index) => {
-            return (
+          <ScrollView>
+            {guessRounds.map((guess, index) => (
               <Text key={index} style={styles.logRoundsContainerTextAttempts}>
-                Tentativa {guessRounds.length - index}: {guess}
+                Attempts {guessRounds.length - index}: {guess}
               </Text>
-            );
-          })}
+            ))}
+          </ScrollView>
         </View>
       </View>
     </AppLayout>
