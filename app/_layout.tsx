@@ -18,6 +18,13 @@ export default function RootLayout() {
             headerShown: false,
           }}
         />
+
+        <Stack.Screen
+          name="game/over"
+          options={{
+            headerShown: false,
+          }}
+        />
       </Stack>
     </GameDataProvider>
   );

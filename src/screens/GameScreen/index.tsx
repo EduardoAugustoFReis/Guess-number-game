@@ -28,9 +28,9 @@ const GameScreen = () => {
   const { enteredNumber } = useGameData();
   const initialGuess = generateRandomNumber(1, 100, enteredNumber);
   const [currentGuess, setCurrentGuess] = useState(initialGuess);
+  const [guessRounds, setGuessRounds] = useState<number[]>([initialGuess]);
 
   function nextGuessHandler(direction: string) {
-    // lower or greater
     if (
       (direction === "lower" && currentGuess < Number(enteredNumber)) ||
       (direction === "greater" && currentGuess > Number(enteredNumber))
@@ -38,25 +38,31 @@ const GameScreen = () => {
       Alert.alert("Don't lie!");
       return;
     }
-      if (direction === "lower") {
-        maxBoundary = currentGuess;
-      } else {
-        minBoundary = currentGuess + 1;
-      }
+    if (direction === "lower") {
+      maxBoundary = currentGuess;
+    } else {
+      minBoundary = currentGuess + 1;
+    }
 
-    setCurrentGuess(
-      generateRandomNumber(minBoundary, maxBoundary, String(currentGuess))
+    const newGuess = generateRandomNumber(
+      minBoundary,
+      maxBoundary,
+      String(currentGuess)
     );
+
+    setCurrentGuess(newGuess);
+
+    setGuessRounds((prev) => [newGuess, ...prev]);
   }
 
   useEffect(() => {
     if (currentGuess === Number(enteredNumber)) {
       Alert.alert("End game!", "The app guess your number");
-      
     }
-  }, [currentGuess, enteredNumber])
+  }, [currentGuess, enteredNumber]);
+
   return (
-    <AppLayout showBackgroundImage={false} colors={["#72063c", "#fff"]}>
+    <AppLayout showBackgroundImage={false} colors={["#72063c", "#430f3a"]}>
       <View style={styles.arrowButtonReturn}>
         <Link href="/" style={{ color: "#fff" }}>
           <AntDesign name="arrowleft" size={20} />
@@ -82,7 +88,7 @@ const GameScreen = () => {
           </Text>
         </View>
         <View style={styles.tipsContainer}>
-          <Text>Higher or Lower ?</Text>
+          <Text style={styles.tipsContainerText}>Higher or Lower ?</Text>
           <View style={styles.tipsContainerButtons}>
             <PrimaryButton
               buttonTitle="-"
@@ -96,7 +102,14 @@ const GameScreen = () => {
         </View>
 
         <View style={styles.logRoundsContainer}>
-          <Text>Log Rounds</Text>
+          <Text style={styles.logRoundsContainerText}>Log Rounds:</Text>
+          {guessRounds.map((guess, index) => {
+            return (
+              <Text key={index} style={styles.logRoundsContainerTextAttempts}>
+                Tentativa {guessRounds.length - index}: {guess}
+              </Text>
+            );
+          })}
         </View>
       </View>
     </AppLayout>
@@ -116,7 +129,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   userNumberChooseContainer: {
-    flex: 1,
+    flex: 0.5,
     alignItems: "center",
   },
   userNumberChooseText: {
@@ -125,12 +138,39 @@ const styles = StyleSheet.create({
     padding: 8,
   },
   tipsContainer: {
-    flex: 1,
+    flex: 0.5,
+  },
+  tipsContainerText: {
+    color: "#fff",
+    fontSize: 18,
+    textAlign: "center",
+    borderWidth: 2,
+    borderColor: "#fff",
+    borderRadius: 8,
+    padding: 8,
+    marginBottom: 10,
   },
   tipsContainerButtons: {
     flexDirection: "row",
+    justifyContent: "center",
+    alignItems: "center",
+    gap: 40,
   },
   logRoundsContainer: {
     flex: 1,
+  },
+  logRoundsContainerText: {
+    color: "#fff",
+    fontSize: 18,
+    textAlign: "center",
+    borderWidth: 2,
+    borderColor: "#fff",
+    borderRadius: 8,
+    padding: 8,
+    marginBottom: 10,
+  },
+  logRoundsContainerTextAttempts: {
+    color: "#fff",
+    fontSize: 16,
   },
 });
