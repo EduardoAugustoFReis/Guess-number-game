@@ -1,15 +1,16 @@
 import AppLayout from "@/src/components/Layout";
+import PrimaryButton from "@/src/components/PrimaryButton";
 import Title from "@/src/components/Title";
 import useGameData from "@/src/context/gameData/useGameData";
 import AntDesign from "@expo/vector-icons/AntDesign";
 import { Link } from "expo-router";
-import React, { useState } from "react";
-import { StyleSheet, Text, View } from "react-native";
+import React, { useEffect, useState } from "react";
+import { Alert, StyleSheet, Text, View } from "react-native";
 
 const generateRandomNumber = (
   min: number,
   max: number,
-  exclude: string,
+  exclude: string
 ): number => {
   const randomNumber = Math.floor(Math.random() * (max - min)) + min;
 
@@ -20,11 +21,40 @@ const generateRandomNumber = (
   }
 };
 
+let minBoundary = 1;
+let maxBoundary = 100;
+
 const GameScreen = () => {
   const { enteredNumber } = useGameData();
-  const initialGuess = generateRandomNumber(1, 100, enteredNumber)
+  const initialGuess = generateRandomNumber(1, 100, enteredNumber);
   const [currentGuess, setCurrentGuess] = useState(initialGuess);
 
+  function nextGuessHandler(direction: string) {
+    // lower or greater
+    if (
+      (direction === "lower" && currentGuess < Number(enteredNumber)) ||
+      (direction === "greater" && currentGuess > Number(enteredNumber))
+    ) {
+      Alert.alert("Don't lie!");
+      return;
+    }
+      if (direction === "lower") {
+        maxBoundary = currentGuess;
+      } else {
+        minBoundary = currentGuess + 1;
+      }
+
+    setCurrentGuess(
+      generateRandomNumber(minBoundary, maxBoundary, String(currentGuess))
+    );
+  }
+
+  useEffect(() => {
+    if (currentGuess === Number(enteredNumber)) {
+      Alert.alert("End game!", "The app guess your number");
+      
+    }
+  }, [currentGuess, enteredNumber])
   return (
     <AppLayout showBackgroundImage={false} colors={["#72063c", "#fff"]}>
       <View style={styles.arrowButtonReturn}>
@@ -35,7 +65,7 @@ const GameScreen = () => {
       </View>
       <View style={styles.container}>
         <Title
-          textTitle="Opponent's Guess"
+          textTitle={`Opponent's Guess: ${currentGuess}`}
           containerStyle={{
             borderWidth: 2,
             borderColor: "#fff",
@@ -53,7 +83,16 @@ const GameScreen = () => {
         </View>
         <View style={styles.tipsContainer}>
           <Text>Higher or Lower ?</Text>
-          <Text>+ -</Text>
+          <View style={styles.tipsContainerButtons}>
+            <PrimaryButton
+              buttonTitle="-"
+              onPress={() => nextGuessHandler("lower")}
+            />
+            <PrimaryButton
+              buttonTitle="+"
+              onPress={() => nextGuessHandler("greater")}
+            />
+          </View>
         </View>
 
         <View style={styles.logRoundsContainer}>
@@ -87,6 +126,9 @@ const styles = StyleSheet.create({
   },
   tipsContainer: {
     flex: 1,
+  },
+  tipsContainerButtons: {
+    flexDirection: "row",
   },
   logRoundsContainer: {
     flex: 1,
